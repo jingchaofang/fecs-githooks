@@ -1,0 +1,29 @@
+{
+  "name": "fecs-githooks",
+  "version": "0.1.0",
+  "description": "ireader fecs git pre-commit hook",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jingchaofang/fecs-githooks"
+  },
+  "scripts": {
+    "install": "fecs -v"
+  },
+  "keywords": [
+    "fecs"
+  ],
+  "author": "jingchaofang <jing@turingca.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.10"
+  },
+  "bugs": {
+    "url": "https://github.com/jingchaofang/fecs-githooks/issues"
+  },
+  "bin": {
+    "fecs-githook": "./bin/fecs-githook"
+  },
+  "dependencies": {
+    "minimist": "^1.1.0"
+  }
+}

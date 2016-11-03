@@ -1,0 +1,247 @@
+#! /usr/bin/env node
+
+/**
+ * @file git pre-commit hook Git代码提交之前对文件进行检查并修复
+ * @author jingchaofang <fangjingchao@zhangyue.com>
+ */
+
+var exec = require('child_process').exec;
+var fs   = require('fs');
+var path = require('path');
+
+var IGNORE_FILENAME = '.fecsignore';
+var name = 'fecs-git-precommit';
+
+var fecs;
+var minimatch;
+
+console.log('\n======HTML、CSS、LESS、JS 代码规范 CHECK AND FORMAT======\n');
+
+exec('npm root -g', function (error, result, stderr) {
+
+    if (error !== null) {
+        console.log('exec error: ' + error);
+        process.exit(1);
+    }
+    // 计时开始
+    console.time(name);
+
+    var fecsRoot = result.trim() + '/fecs';
+    try {
+        require(fecsRoot);
+    }
+    catch (e) {
+        console.log('没有安装FECS，请先运行\'npm install fecs -g\'~~');
+        process.exit(1);
+    }
+
+    fecs = require(fecsRoot);
+    minimatch = require(fecsRoot + '/node_modules/minimatch');
+
+    // console.log('开始检查...');
+
+    var stagedFiles;
+    // git diff-index --cached HEAD --name-only
+    // diff-index 查看连个版本的索引 --cached 暂存区（add） --name-only 只显示文件名
+    // HEAD 最近的commit
+    exec('git diff-index --cached --name-only HEAD', function (error, result, stderr) {
+
+        if (error !== null) {
+            console.log('' + error);
+            // 没有提交记录，就没有HEAD记录，会报错
+            // fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree.
+            if (('' + error).indexOf('unknown revision') > 0) {
+                console.log('******仓库还没有提交记录，默认对所有文件进行检查******');
+                stagedFiles = ['./**/*.{js,css,less,html}'];
+            }
+            else {
+                process.exit(1);
+            }
+        } 
+        else {
+            // 没有文件
+            if (!result) {
+                console.log('******暂存区没有文件，请添加后再提交******');
+                process.exit(1);
+            }
+        }
+
+        // 还有文件未添加
+        if (result.indexOf('Changes not staged for commit:') >= 0) {
+            console.log(result);
+            process.exit(1);
+        }
+
+        console.log('******提交的文件列表******\n');
+        console.log(result);
+
+        stagedFiles = stagedFiles || result.trim().split('\n');
+
+        exitWhenEmpty(stagedFiles);
+
+        // 去掉删除的（不存在）文件，检测是否存在文件
+        stagedFiles = stagedFiles.filter(function (file) {
+        //__dirname 表示当前执行脚本所在的目录。
+            var filePath = path.resolve(__dirname, '../../', file);
+            //fs.existsSync(path, callback)同步版的检测给定的路径是否存在。
+            return fs.existsSync(filePath);
+        });
+
+        stagedFiles = ignore(stagedFiles);
+        exitWhenEmpty(stagedFiles);
+
+        var patterns = require(fecsRoot + '/lib/util').buildPattern(stagedFiles, 'js,css,less,html');
+        patterns.specials && delete patterns.specials;
+
+        // console.log(patterns);
+
+        exitWhenEmpty(patterns);
+        fecsCheckError(stagedFiles);
+    });
+});
+
+function exitWhenEmpty(files) {
+    if (!files || files.length === 0) {
+        console.log('******没有文件需要被检测******');
+        // exit([code])使用指定的code结束进程，如果忽略将会使用code 0。
+        process.exit(0);
+    }
+}
+
+/**
+ * 删除fecs中忽略的文件
+ *
+ * @param  {Array} files 文件列表
+ * @return {Array}       修改后的文件列表
+ */
+function ignore(files) {
+    var patterns = [];
+    function valid(line) {
+        line = line.trim();
+        return line !== '' && line[0] !== '#';
+    }
+    var ignoreFilePath = path.resolve(__dirname, '../../' + IGNORE_FILENAME);
+
+    try {
+        patterns = fs.readFileSync(ignoreFilePath, 'utf8').split(/\r?\n/).filter(valid);
+        files = files.filter(function (filePath) {
+            var result = false;
+            patterns.forEach(function (pattern) {
+                var matches = minimatch(filePath, pattern) || minimatch(filePath, pattern + '/**');
+                if (matches) {
+                    result = true;
+                    console.log('%s is ignored by %s.', filePath, '.fecsignore');
+                    return false;
+                }
+            });
+            return !result;
+        });
+    }
+    catch (e) {
+        // 没有.fecsignore
+    }
+    console.log('');
+    return files;
+}
+
+/**
+ * 运行代码检查[错误]并修复
+ *
+ * @param {Array} files 文件列表数组
+ */
+function fecsCheckError(files) {
+    var options= {
+        color: true,
+        rule: true,
+        stream: false,
+        lookup: true,
+        _: files,
+        level: 2,
+        reporter: 'baidu'
+    };
+
+    var done = function (success, json) {
+        success = success && json.length === 0;
+        var isZero = success;
+        if(!success) {
+            console.log('******[强制] 必须修复******\n\n');
+            fecsCheckWarn(files, isZero);
+        }else {
+            fecsCheckWarn(files, isZero);
+        }
+    };
+
+    fecs.check(options, done);
+}
+
+
+/**
+ * [建议]代码检查，允许提交
+ *
+ * @param {array} files 文件列表数组
+ * @param {boolean} isZero 是否进程代码退出为0，flase否，true是
+ */
+function fecsCheckWarn(files, isZero) {
+    var options= {
+        color: true,
+        rule: true,
+        stream: false,
+        lookup: true,
+        _: files,
+        level: 1,
+        reporter: 'baidu'
+    };
+    var done = function (success, json) {
+        success = success && json.length === 0;
+        if(!success) {
+            console.log('******[建议] 建议修复******\n');
+        }
+        // TODO:warn的代码是否自动修复
+        if(!isZero) {
+            fecsFormat(files);
+        }
+        else {
+            if(success){
+                console.log('======没有代码规范错误，正在提交=======');
+                console.timeEnd(name);
+                // 允许提交
+                process.exit(0);
+            }
+            else {
+                console.timeEnd(name);
+                process.exit(0);
+            }
+        }
+
+    };
+
+    fecs.check(options, done);   
+}
+
+/**
+ * 修复[错误][建议]，阻止提交
+ *
+ * @param {Array} files 文件列表数组
+ */
+function fecsFormat(files) {
+    var options= {
+        stream: false,
+        output: './',
+        _: files
+    };
+    var done = function() {
+        console.log('\n******机械修复完成******\n');
+        var filelist = files.join(' ');
+        // 机械修复后清空暂存区，防止再次commit提交不规范代码的暂存区代码
+        exec('git reset HEAD'+' '+filelist, function(error, result, stderr){
+            console.log('******暂存区清除完成，请重新添加和提交******');
+            console.timeEnd(name);
+            // 阻止提交
+            process.exit(1);
+        }); 
+    };
+
+    fecs.format(options, done);
+}
+
+// TODO：测试图形化工具对钩子的支持性，是否支持自动修复后自动提交
