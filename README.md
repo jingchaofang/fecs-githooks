@@ -1,5 +1,10 @@
 # fecs-githooks
 
+[![GitHub issues](https://img.shields.io/github/issues/jingchaofang/fecs-githooks.svg)](https://github.com/jingchaofang/fecs-githooks/issues)
+[![GitHub forks](https://img.shields.io/github/forks/jingchaofang/fecs-githooks.svg)](https://github.com/jingchaofang/fecs-githooks/network)
+[![GitHub stars](https://img.shields.io/github/stars/jingchaofang/fecs-githooks.svg)](https://github.com/jingchaofang/fecs-githooks/stargazers)
+[![GitHub license](https://img.shields.io/github/license/jingchaofang/fecs-githooks.svg)](https://github.com/jingchaofang/fecs-githooks)
+
 ## 命令行
 
 安装：
