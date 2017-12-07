@@ -1,0 +1,9 @@
+*.png
+*.jpg
+*.gif
+*.tpl
+*.md
+*.txt
+*.sh
+*.php
+*.json

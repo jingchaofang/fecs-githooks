@@ -1,0 +1,18 @@
+csshint:
+    horizontal-vertical-position: false
+    vendor-prefixes-sort: false
+    require-number: false
+    min-font-size: false
+
+lesslint:
+    require-newline:
+      - "property"
+      - "media-query-condition"
+    require-before-space: false
+    require-around-space: false
+    vendor-prefixes-sort: false
+
+csscomb:
+    sort-order: false
+    vendor-prefix-align: false
+    leading-zero: false
