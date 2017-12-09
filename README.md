@@ -1,5 +1,9 @@
 # fecs-githooks
 
+[fecs-git-hooks](https://github.com/cxtom/fecs-git-hooks)的二次开发
+
+[![GitHub version](https://badge.fury.io/gh/jingchaofang%2Ffecs-githooks.svg)](https://badge.fury.io/gh/jingchaofang%2Ffecs-githooks)
+[![npm version](https://badge.fury.io/js/fecs-githooks.svg)](https://badge.fury.io/js/fecs-githooks)
 [![GitHub issues](https://img.shields.io/github/issues/jingchaofang/fecs-githooks.svg)](https://github.com/jingchaofang/fecs-githooks/issues)
 [![GitHub forks](https://img.shields.io/github/forks/jingchaofang/fecs-githooks.svg)](https://github.com/jingchaofang/fecs-githooks/network)
 [![GitHub stars](https://img.shields.io/github/stars/jingchaofang/fecs-githooks.svg)](https://github.com/jingchaofang/fecs-githooks/stargazers)
